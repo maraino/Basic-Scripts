@@ -1,0 +1,15 @@
+RSSD v0.1 
+======
+
+First version of a script created to automate the download of torrents or any 
+other kind of data from rss feeds.
+
+The current status of each feed is stored in plain text in a YAML file that is 
+also used to define each feed, as weel as the command to execute on each
+link.
+
+Usage
+-----
+
+# perl rssd.pl --conf rssd.yml
+

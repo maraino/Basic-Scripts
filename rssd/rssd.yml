@@ -1,0 +1,13 @@
+---
+default:
+  command: 'transmission-remote -a <url>'
+  path: ~
+rss:
+  Feed 1:
+    last: 'Tue, 26 Sep 2010 16:34:54 -0500'
+    url: http://test.example.com/feed1.rss
+  Feed 2:
+    url: http://test.example.com/feed2.rss
+  Feed 3:
+    last: 'Mon, 30 Aug 2010 22:01:01 -0500'
+    url: http://test.example.com/feed3.rss
