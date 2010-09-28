@@ -1,5 +1,5 @@
 RSSD v0.1 
-======
+=========
 
 First version of a script created to automate the download of torrents or any 
 other kind of data from rss feeds.
@@ -10,6 +10,19 @@ link.
 
 Usage
 -----
+# perl rssd.pl --help
+Usage: rssd.pl [--run] [--conf config_file] [OPTIONS]
+       rssd.pl --new [--conf config_file] [OPTIONS]
+       rssd.pl --add --name Name --url http://example.com/rss.xml [--params last=DATE,command=COMMAND,path=PATH] [OPTIONS]
+       rssd.pl --help 
+Options: 
+  -t | --test     Don't perform any action.
+  -d | --debug    Show debug messages.
 
-# perl rssd.pl --conf rssd.yml
+Commands: 
+  -r | --run      Default action. Get latest RSS and performa actions.
+  -n | --new      Create a new configuration YAML file.
+  -a | --add      Add a RSS feed to the selected YAML file.
+  -h | --help     Show this help summary page.
 
+Default YAML file: ~/.rssd.yml
