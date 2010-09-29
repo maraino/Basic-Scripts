@@ -1,8 +1,8 @@
-RSSD v0.1 
+RSSD v0.2 
 =========
 
-First version of a script created to automate the download of torrents or any 
-other kind of data from rss feeds.
+Script created to automate the download of torrents or any other kind of data 
+from rss feeds.
 
 The current status of each feed is stored in plain text in a YAML file that is 
 also used to define each feed, as weel as the command to execute on each
@@ -11,18 +11,24 @@ link.
 Usage
 -----
 # perl rssd.pl --help
-Usage: rssd.pl [--run] [--conf config_file] [OPTIONS]
-       rssd.pl --new [--conf config_file] [OPTIONS]
-       rssd.pl --add --name Name --url http://example.com/rss.xml [--params last=DATE,command=COMMAND,path=PATH] [OPTIONS]
+RSSd v0.2 (http://github.com/maraino)
+Usage: rssd.pl [--run] [--conf config_file] [FLAGS]
+       rssd.pl --new [--conf config_file] [FLAGS]
+       rssd.pl --add Name --url http://example.com/rss.xml [--param last=DATE] [--param command=COMMAND] [--param path=PATH] [FLAGS]
+       rssd.pl --del Name
        rssd.pl --help 
-Options: 
-  -t | --test     Don't perform any action.
-  -d | --debug    Show debug messages.
+Flags: 
+  -t | --test     Don't perform any action. Display the results.
+  -v | --verbose  Show debug messages.
 
-Commands: 
-  -r | --run      Default action. Get latest RSS and performa actions.
-  -n | --new      Create a new configuration YAML file.
-  -a | --add      Add a RSS feed to the selected YAML file.
-  -h | --help     Show this help summary page.
+Commands/Options: 
+  --run   | -r    Default action. Get latest RSS and performa actions.
+  --new   | -n    Create a new configuration YAML file.
+  --add   | -a    Add or update a RSS feed in the selected YAML file.
+  --url   | -u    Add the url of the feed to the YAML file, requires --add.
+  --param | -p    Add specific parameters to the YAML file, requires --add.
+  --del   | -d    Delete a RSS feed from the selected YAML file.
+  --help  | -h    Show this help summary page.
 
 Default YAML file: ~/.rssd.yml
+

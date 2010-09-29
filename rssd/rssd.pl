@@ -24,8 +24,8 @@ sub main {
     my $conf_file = $ENV{HOME} . '/.rssd.yml';
     my $test = 0;
     my $debug = 0;
-    my ($new, $help);
-    my ($add, $name, $url, $params);
+    my ($run, $new, $help, $del);
+    my ($add, $url, $params);
     
     GetOptions (
                 # Configuration file
@@ -34,18 +34,23 @@ sub main {
                 # Help
                 'h|help' => \$help,
                 
+                # Run 
+                'r|run'  => \$run,
+                
                 # New file
                 'n|new' => \$new, 
 
-                # Add link
-                'a|add'      => \$add, 
-                'name=s'   => \$name,
-                'url=s'   => \$url,
-                'params=s' => \$params,
+                # Add or update feed
+                'a|add=s'    => \$add, 
+                'u|url=s'    => \$url,
+                'p|param=s%' => \$params,
+                
+                # Delete feed
+                'd|del|delete=s' => \$del, 
                 
                 # Extra flags
-                't|test'  => \$test,
-                'd|debug' => \$debug);
+                't|test'    => \$test,
+                'v|verbose' => \$debug);
 
     if ($help) {
         help();
@@ -72,15 +77,13 @@ sub main {
     if ($new) {
         $rssd->create($conf_file);
         $rssd->save();
-    } elsif($add) {
-        my @p;
-        my @add_params = split(',', $params);
-        $params = {};
-        foreach (@add_params) {
-            @p = split('=', $_);
-            $params->{$p[0]} = $p[1];
+    } elsif($del) {
+        if ($rssd->remove($del)) {
+            $rssd->save();
         }
-        $rssd->add($name, $url, $params);
+    } elsif($add) {
+        $params->{url} = $url if ($url);
+        $rssd->add($add, $params);
         $rssd->save();
     } else {
         $rssd->run();
@@ -98,19 +101,24 @@ sub main {
 
 sub help {
     print <<USAGE;
-Usage: $0 [--run] [--conf config_file] [OPTIONS]
-       $0 --new [--conf config_file] [OPTIONS]
-       $0 --add --name Name --url http://example.com/rss.xml [--params last=DATE,command=COMMAND,path=PATH] [OPTIONS]
+RSSd v0.2 (http://github.com/maraino)
+Usage: $0 [--run] [--conf config_file] [FLAGS]
+       $0 --new [--conf config_file] [FLAGS]
+       $0 --add Name --url http://example.com/rss.xml [--param last=DATE] [--param command=COMMAND] [--param path=PATH] [FLAGS]
+       $0 --del Name
        $0 --help 
-Options: 
-  -t | --test     Don't perform any action.
-  -d | --debug    Show debug messages.
+Flags: 
+  -t | --test     Don't perform any action. Display the results.
+  -v | --verbose  Show debug messages.
 
-Commands: 
-  -r | --run      Default action. Get latest RSS and performa actions.
-  -n | --new      Create a new configuration YAML file.
-  -a | --add      Add a RSS feed to the selected YAML file.
-  -h | --help     Show this help summary page.
+Commands/Options: 
+  --run   | -r    Default action. Get latest RSS and performa actions.
+  --new   | -n    Create a new configuration YAML file.
+  --add   | -a    Add or update a RSS feed in the selected YAML file.
+  --url   | -u    Add the url of the feed to the YAML file, requires --add.
+  --param | -p    Add specific parameters to the YAML file, requires --add.
+  --del   | -d    Delete a RSS feed from the selected YAML file.
+  --help  | -h    Show this help summary page.
 
 Default YAML file: ~/.rssd.yml
 
@@ -174,8 +182,8 @@ sub create($$) {
                     };
 }
 
-sub add($$$$) {
-    my ($self, $name, $url, $params) = @_;
+sub add($$$) {
+    my ($self, $name, $params) = @_;
     
     $self->_read_config() if(!defined($self->{YAML}));
     
@@ -187,12 +195,27 @@ sub add($$$$) {
         $self->{YAML}->{rss}->{$name} = {};
     }
 
-    $self->{YAML}->{rss}->{$name}->{url} = $url;
-    
-    # Add extra parameters like last,command or path
+    # Add parameters like url,last,command or path
     while(my ($k, $v) = each(%$params)) {
         $self->{YAML}->{rss}->{$name}->{$k} = $v;
     }
+}
+
+sub remove($$) {
+    my ($self, $name) = @_;
+    
+    $self->_read_config() if(!defined($self->{YAML}));
+    
+    my $ret;
+    if (exists($self->{YAML}->{rss}->{$name})) {
+        $ret = 1;
+        delete $self->{YAML}->{rss}->{$name};
+    } else {
+        $ret = 0;
+        print STDERR "Error: Feed '$name' does not exist\n";
+    }
+    
+    return $ret;
 }
 
 sub save {
@@ -206,7 +229,12 @@ sub save {
         croak("YAML has not been created");
     }
     
-    if (!$self->{TEST}) {
+    if ($self->{TEST}) {
+        print '-'x80 . "\n";
+        print "Configuration file\n";
+        print '-'x80 . "\n";
+        print YAML::Dump($self->{YAML});
+    } else {
         YAML::DumpFile($self->{CONF}, $self->{YAML});
     }
 }
@@ -215,6 +243,12 @@ sub run {
     my ($self) = @_;
     
     $self->_read_config() if(!defined($self->{YAML}));
+    
+    if ($self->{TEST}) {
+        print '-'x80 . "\n";
+        print "Commands\n";
+        print '-'x80 . "\n";
+    }
     
     my $default_command = undef;
     my $path = undef;
