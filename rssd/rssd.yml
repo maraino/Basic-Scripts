@@ -1,6 +1,6 @@
 ---
 default:
-  command: 'transmission-remote -a <url>'
+  command: 'transmission-remote -a <link>'
   path: ~
 rss:
   Feed 1:
@@ -8,6 +8,8 @@ rss:
     url: http://test.example.com/feed1.rss
   Feed 2:
     url: http://test.example.com/feed2.rss
+    command: 'transmission-remote -a <link> -f ~/Downloads/feed2'
   Feed 3:
     last: 'Mon, 30 Aug 2010 22:01:01 -0500'
     url: http://test.example.com/feed3.rss
+    command: 'wget <link> -P ~/Downloads/<category>'
