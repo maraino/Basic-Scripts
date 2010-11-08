@@ -276,14 +276,14 @@ sub run {
                 } 
 
                 if (defined($command)) {
-                    $command = $self->_create_command($command, $item);
+                    my $cmd = $self->_create_command($command, $item);
                     
                     if ($self->{TEST}) {
-                        print "$command\n";
+                        print "$cmd\n";
                     } else {
-                        system($command);
+                        system($cmd);
                         if ($? != 0) {
-                            carp(sprintf("Commdand '$command' exited with a value '%d'", $? >>8));
+                            carp(sprintf("Command '$cmd' exited with a value '%d'", $? >>8));
                         }
                     }
                 }
@@ -370,7 +370,7 @@ sub _parse_rss {
             
             push @items, $i;
             
-            if ($tpub_date > $new_tlast) {
+            if (!$new_tlast || $tpub_date > $new_tlast) {
                 $new_tlast = $tpub_date;
                 $new_last = $pub_date;
             }
