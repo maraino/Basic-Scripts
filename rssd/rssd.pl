@@ -288,8 +288,10 @@ sub run {
                     }
                 }
             }
-            
-            $v->{last} = $rss->{pubDate};
+
+            if (exists($rss->{pubDate})) {
+                $v->{last} = $rss->{pubDate};
+            }
         }
     }
 }
