@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #
 # RSSd RSS downloader. Performs automatic commands with each update.
-# Copyright (C) 2010    Mariano Cano
+# Copyright (C) 2010-2011 Mariano Cano
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ sub main {
     my $conf_file = $ENV{HOME} . '/.rssd.yml';
     my $test = 0;
     my $debug = 0;
+    my $anonymous = 0;
     my ($run, $new, $help, $del);
     my ($add, $url, $params);
     
@@ -50,7 +51,8 @@ sub main {
                 
                 # Extra flags
                 't|test'    => \$test,
-                'v|verbose' => \$debug);
+                'v|verbose' => \$debug,
+                'z|anonymous' => \$anonymous);
 
     if ($help) {
         help();
@@ -71,6 +73,10 @@ sub main {
 
     if ($debug) {
         $rssd->debug(1);
+    }
+
+    if ($anonymous) {
+        $rssd->anonymous(1);
     }
     
     # Run operations
@@ -108,17 +114,18 @@ Usage: $0 [--run] [--conf config_file] [FLAGS]
        $0 --del Name
        $0 --help 
 Flags: 
-  -t | --test     Don't perform any action. Display the results.
-  -v | --verbose  Show debug messages.
+  -t | --test      Don't perform any action. Display the results.
+  -v | --verbose   Show debug messages.
+  -z | --anonymous Use http://anonymouse.org/ to access the rss files
 
 Commands/Options: 
-  --run   | -r    Default action. Get latest RSS and performa actions.
-  --new   | -n    Create a new configuration YAML file.
-  --add   | -a    Add or update a RSS feed in the selected YAML file.
-  --url   | -u    Add the url of the feed to the YAML file, requires --add.
-  --param | -p    Add specific parameters to the YAML file, requires --add.
-  --del   | -d    Delete a RSS feed from the selected YAML file.
-  --help  | -h    Show this help summary page.
+  --run   | -r     Default action. Get latest RSS and performa actions.
+  --new   | -n     Create a new configuration YAML file.
+  --add   | -a     Add or update a RSS feed in the selected YAML file.
+  --url   | -u     Add the url of the feed to the YAML file, requires --add.
+  --param | -p     Add specific parameters to the YAML file, requires --add.
+  --del   | -d     Delete a RSS feed from the selected YAML file.
+  --help  | -h     Show this help summary page.
 
 Default YAML file: ~/.rssd.yml
 
@@ -161,6 +168,12 @@ sub debug {
     my $self = shift;
     $self->{DEBUG} = shift if @_;
     return $self->{DEBUG};
+}
+
+sub anonymous {
+    my $self = shift;
+    $self->{ANONYMOUS} = shift if @_;
+    return $self->{ANONYMOUS};
 }
 
 sub conf {
@@ -311,7 +324,6 @@ sub _read_config {
     if (!exists($conf->{rss})) {
         if ($self->{DEBUG}) {
             carp("Nothing to do");
-            print "mariano\n";
             return undef;
         }
     }
@@ -329,6 +341,9 @@ sub _create_command {
 
     while (my ($k, $v) = each (%$params)) {
         $v =~ s/"/\"/g;
+        if ($self->anonymous() && $k eq 'link') {
+            $v = $self->_anonymize($v);
+        }
         $cmd =~ s/<$k>/"$v"/g;
     }
 
@@ -343,8 +358,16 @@ sub _parse_rss {
     my $new_last = $last;
 
     my $p = XML::RSS::Parser->new;
-    my $feed = $p->parse_uri($url);
     
+    if ($self->anonymous()) {
+        $url = $self->_anonymize($url);
+    }
+
+    if ($self->{DEBUG}) {
+        carp("Parsing $url");
+    }
+    
+    my $feed = $p->parse_uri($url);
     if (!defined($feed)) {
         print STDERR "Error: cannot parse $url\n";
         return ();
@@ -387,4 +410,11 @@ sub _save_in_path {
     my ($self, $link, $path) = @_;
     # TODO
     carp("Not implemented (link: $link, path: $path)");
+}
+
+# Use http://anonymouse.org/ as a proxy
+# TODO: add support for different webs or proxies
+sub _anonymize {
+    my ($self, $url) = @_;
+    return 'http://anonymouse.org/cgi-bin/anon-www.cgi/' . $url;
 }
